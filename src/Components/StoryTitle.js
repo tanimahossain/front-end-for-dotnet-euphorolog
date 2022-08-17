@@ -14,12 +14,20 @@ function StoryTitle(props) {
                     {props.story.storyTitle}
                 </Link>
             </h3>
-            <Link to={userUrl} className="noUnderLine">
-                <span className="authorName noUnderLine shadow">
+            {props.flag && (
+                <Link to={userUrl} className="noUnderLine">
+                    <span className="authorName noUnderLine shadow">
+                        Author Name:{' '}
+                        {props.story.authorUsername}
+                    </span>
+                </Link>
+            )}
+            {!props.flag && (
+                <span className="noUnderLine">
                     Author Name:{' '}
                     {props.story.authorUsername}
                 </span>
-            </Link>
+            )}
         </div>
     );
 }

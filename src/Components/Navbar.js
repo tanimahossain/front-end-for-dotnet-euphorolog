@@ -8,7 +8,7 @@ import {
 import { Link, Navigate, NavLink } from 'react-router-dom';
 import '../App.css';
 import logo from '../appLogo - Copy.png';
-import LogOut from '../utils/LogOut';
+import AllContext from './AllContext';
 function SignUpLogIn() {
     return (
         <Link to="/auth" className="navSignUpLogIn">
@@ -23,9 +23,8 @@ function SignUpLogIn() {
         </Link>
     );
 }
-function User({ userName }) {
+function User({ userName, LogOut }) {
     const url = '/users/' + userName;
-    console.log('user', url);
     return (
         <>
             <NavLink
@@ -54,11 +53,11 @@ function User({ userName }) {
     );
 }
 export default class Navbar extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
-
         this.state = {
-            loggedIn: localStorage.getItem('loggedIn'),
+            loggedIn: localStorage.getItem('isLoggedIn'),
             userName: localStorage.getItem('userName'),
             loading: false,
             doRedirect: false,
@@ -66,7 +65,7 @@ export default class Navbar extends Component {
         };
     }
     componentDidMount() {
-        if (localStorage.getItem('loggedIn')) {
+        if (localStorage.getItem('isLoggedIn')) {
             this.setState({
                 loggedIn: true,
                 userName: localStorage.getItem('userName'),
@@ -80,9 +79,10 @@ export default class Navbar extends Component {
         }
     }
     render() {
-        console.log('username', this.state.userName);
-        const auth = this.state.loggedIn ? (
-            <User userName={this.state.userName} />
+        const { isLoggedIn, userName, LogOut } =
+            this.context;
+        const auth = isLoggedIn ? (
+            <User userName={userName} LogOut={LogOut} />
         ) : (
             <SignUpLogIn />
         );

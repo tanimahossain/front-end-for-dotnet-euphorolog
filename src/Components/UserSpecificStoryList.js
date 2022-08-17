@@ -1,50 +1,61 @@
 import axios from 'axios';
 import React, { Component } from 'react';
 import '../App.css';
-import Loading from './Loading';
+import AllContext from './AllContext';
 import PrintStories from './PrintStories.js';
-
 class UserSpecificStoryList extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
         this.state = {
             ViewList: [],
             userName: props.userName,
-            loading: false,
             currentPage: 1,
             storiesPerPage: 5,
         };
     }
     async componentDidMount() {
-        axios.defaults.headers = {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Expires: '0',
-        };
+        const { setAlert, setRedirect, LogOut } =
+            this.context;
+        setAlert('loading', true);
         try {
-            this.setState({
-                loading: false,
-            });
             const response = await axios.get(
                 '/api/v1/stories/'
             );
-            this.setState({
-                ViewList: response.data.storyData,
+            const List = response.data.storyData;
+            List.sort(function (a, b) {
+                return (
+                    new Date(b.createdAt) -
+                    new Date(a.createdAt)
+                );
             });
             this.setState({
-                loading: false,
+                ViewList: List,
             });
         } catch (err) {
-            //
+            if (err.response.status === 401) {
+                LogOut();
+            }
+            if (err.response.status !== 404) {
+                alert(err);
+            }
+            setRedirect(true);
         }
-        this.setState({
-            loading: false,
-        });
+        setAlert('loading', false);
     }
     Paginate = (page) => {
         this.setState({
             currentPage: page,
         });
+    };
+
+    navigate = () => {
+        const { doRedirect } = this.context;
+        if (doRedirect) {
+            window.open('/', '_self');
+            //setRedirect(false);
+            //return <Navigate to="/" />;
+        }
     };
     render() {
         const { ViewList } = this.state;
@@ -66,10 +77,16 @@ class UserSpecificStoryList extends Component {
             indexOfFirstPost,
             indexOfLastPost
         );
-        console.log(this.state.loading);
+        const { doRedirect } = this.context;
+        () => this.navigate();
+
+        if (doRedirect) {
+            window.open('/', '_self');
+            //setRedirect(false);
+            //return <Navigate to="/" />;
+        }
         return (
             <>
-                <Loading loading={this.state.loading} />
                 <PrintStories
                     currentPage={this.state.currentPage}
                     data={Stories}

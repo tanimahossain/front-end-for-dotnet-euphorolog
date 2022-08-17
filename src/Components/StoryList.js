@@ -1,53 +1,59 @@
 import axios from 'axios';
-import React, { Component } from 'react';
+import { Component } from 'react';
+import { Navigate } from 'react-router-dom';
 import '../App.css';
-import Loading from './Loading';
+import AllContext from './AllContext';
 import PrintStories from './PrintStories.js';
-
 class Stories extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
         this.state = {
             stories: [],
-            loading: false,
             currentPage: 1,
             storiesPerPage: 5,
         };
     }
     async componentDidMount() {
-        this.setState({
-            loading: true,
-        });
-        axios.defaults.headers = {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Expires: '0',
-        };
+        const { setAlert, setRedirect, LogOut } =
+            this.context;
+        setAlert('loading', true);
         try {
-            this.setState({
-                loading: true,
-            });
             const response = await axios.get(
                 '/api/v1/stories/'
             );
-
-            this.setState({
-                stories: response.data.storyData,
+            const List = response.data.storyData;
+            List.sort(function (a, b) {
+                return (
+                    new Date(b.createdAt) -
+                    new Date(a.createdAt)
+                );
             });
             this.setState({
-                loading: false,
+                stories: List,
             });
         } catch (err) {
-            //
+            if (err.response.status === 401) {
+                LogOut();
+            }
+            if (err.response.status !== 404) {
+                alert(err);
+            }
+            setRedirect(true);
         }
-        this.setState({
-            loading: false,
-        });
+        setAlert('loading', false);
     }
     Paginate = (page) => {
         this.setState({
             currentPage: page,
         });
+    };
+    navigate = () => {
+        const { doRedirect, setRedirect } = this.context;
+        if (doRedirect) {
+            setRedirect(false);
+            return <Navigate to="/" />;
+        }
     };
     render() {
         const { stories } = this.state;
@@ -60,9 +66,14 @@ class Stories extends Component {
             indexOfFirstPost,
             indexOfLastPost
         );
+        () => this.navigate();
+        const { doRedirect, setRedirect } = this.context;
+        if (doRedirect) {
+            setRedirect(false);
+            return <Navigate to="/" />;
+        }
         return (
             <>
-                <Loading loading={this.state.loading} />
                 <PrintStories
                     currentPage={this.state.currentPage}
                     data={Stories}

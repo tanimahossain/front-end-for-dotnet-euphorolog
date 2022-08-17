@@ -24,14 +24,14 @@ function Preview(props) {
                     </div>
                 </span>
             </div>
-            <div className="seeFullStory">
-                <Link to={storyUrl} className="noUnderLine">
+            <Link to={storyUrl} className="noUnderLine">
+                <div className="seeFullStory">
                     See Full Story
                     <span className="icon">
                         <FaChevronRight />
                     </span>
-                </Link>
-            </div>
+                </div>
+            </Link>
         </div>
     );
 }

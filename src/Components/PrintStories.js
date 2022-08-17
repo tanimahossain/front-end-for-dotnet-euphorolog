@@ -5,11 +5,6 @@ import Story from './Story';
 
 function PrintStories(props) {
     let List = props.data;
-    List.sort(function (a, b) {
-        return (
-            new Date(b.createdAt) - new Date(a.createdAt)
-        );
-    });
     let ViewList = List.map((eStory) => (
         <Story key={eStory.storyId} story={eStory} />
     ));

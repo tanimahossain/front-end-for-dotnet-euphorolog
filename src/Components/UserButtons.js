@@ -3,16 +3,19 @@ import React, { Component } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import '../App.css';
 import '../styles/Profile.css';
+import AllContext from './AllContext';
 export default class UserButtons extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
-        //console.log(props);
         this.state = {
             loading: true,
             doRedirect: false,
         };
     }
     handleDeleteChange = async () => {
+        const { LogOut, setAlert, setRedirect } =
+            this.context;
         const user = {};
         const config = {
             headers: {
@@ -22,30 +25,47 @@ export default class UserButtons extends Component {
                 )}`,
             },
         };
-        axios.defaults.headers = {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Expires: '0',
-        };
         const baseUrl = '/api/v1/users/';
         //const navigate = useNavigate();
         try {
-            this.setState({ loading: true });
+            setAlert('loading', true);
             await axios.delete(baseUrl, config, user);
-            this.setState({ loading: false });
+            LogOut();
             alert('User deleted!');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('token');
-            localStorage.removeItem('loggedIn');
+            setAlert('loading', false);
 
-            this.setState({ doRedirect: true });
-        } catch {
+            setRedirect(true);
+        } catch (err) {
+            if (err.response.status === 401) {
+                LogOut();
+            }
+            if (err.response.status !== 404) {
+                alert(err);
+            }
             //console.log(err);
         }
     };
+    navigate = () => {
+        const { doRedirect, setRedirect } = this.context;
+        if (doRedirect) {
+            setRedirect(false);
+            return <Navigate to="/" />;
+        }
+    };
     render() {
-        if (this.state.doRedirect) {
-            this.setState({ doRedirect: false });
+        const {
+            isLoggedIn,
+            userName,
+            doRedirect,
+            setRedirect,
+        } = this.context;
+        const { user } = this.props;
+        console.log(user, userName);
+        if (!isLoggedIn) return;
+        if (userName !== this.props.user.userName) return;
+        () => this.navigate();
+        if (doRedirect) {
+            setRedirect(false);
             return <Navigate to="/" />;
         }
         return (
@@ -63,9 +83,7 @@ export default class UserButtons extends Component {
                     </Link>
                     <button
                         className="DeleteUserbtn"
-                        onClick={() =>
-                            this.handleDeleteChange
-                        }
+                        onClick={this.handleDeleteChange}
                     >
                         Delete User
                     </button>

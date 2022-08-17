@@ -3,27 +3,21 @@ import React, { Component } from 'react';
 import { Navigate } from 'react-router-dom';
 import '../App.css';
 import StoryButtons from '../Components/StoryButtons.js';
+import UpdateFullStory from '../Components/UpdateFullStory.js';
 import GetDate from '../utils/DateFormat';
-import Loading from './Loading';
+import AllContext from './AllContext';
 import StoryTitle from './StoryTitle.js';
 
-function GetButtons(props) {
-    const loggedIn = localStorage.getItem('loggedIn');
-    if (
-        loggedIn &&
-        localStorage.getItem('userName') ==
-            props.story.authorUsername
-    ) {
-        return <StoryButtons story={props.story} />;
-    }
-    return;
-}
 function PrintAStory(props) {
+    console.log(props.setMyStoryEdit.toString());
     return (
         <div className="container">
             <div className="storyDetails">
                 <div className="story-info">
-                    <StoryTitle story={props.story} />
+                    <StoryTitle
+                        story={props.story}
+                        flag={true}
+                    />
                     <div className="storyDate-text">
                         Created at: &emsp;&emsp;&ensp;
                         <GetDate
@@ -37,55 +31,85 @@ function PrintAStory(props) {
                     <div className="storyBody">
                         {props.story.storyDescription}
                     </div>
-                    {GetButtons(props)}
+                    <StoryButtons
+                        story={props.story}
+                        storyId={props.story.storyId}
+                        userName={
+                            props.story.authorUsername
+                        }
+                        setMyStoryEdit={
+                            props.setMyStoryEdit
+                        }
+                    />
                 </div>
             </div>
         </div>
     );
 }
 class FullStory extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
         //console.log(props);
         this.state = {
             ViewList: {},
             storyId: props.storyId,
-            doRedirect: false,
             error: '',
-            loading: false,
+            myStoryEdit: false,
         };
     }
-    async componentDidMount() {
+    setMyStoryEdit = (val) => {
         this.setState({
-            loading: true,
+            myStoryEdit: val,
         });
+    };
+    async componentDidMount() {
+        const { setRedirect, setAlert, LogOut } =
+            this.context;
         const baseUrl =
             '/api/v1/stories/' + this.state.storyId;
-
+        setAlert('loading', true);
         try {
             const response = await axios.get(baseUrl);
             this.setState({
                 ViewList: response.data.storyData,
             });
-            this.setState({
-                loading: false,
-            });
         } catch (err) {
-            this.setState({
-                doRedirect: true,
-            });
+            if (err.response.status === 401) {
+                LogOut();
+            }
+            if (err.response.status !== 404) {
+                alert(err.response.data.message);
+            }
+            setRedirect(true);
         }
+        setAlert('loading', false);
     }
     render() {
+        const { doRedirect, setRedirect } = this.context;
         const { ViewList } = this.state;
-        //console.log(ViewList);
-        if (this.state.doRedirect) {
+        if (doRedirect) {
+            setRedirect(false);
             return <Navigate to="/" />;
         } else
             return (
                 <>
-                    <Loading loading={this.state.loading} />
-                    <PrintAStory story={ViewList} />
+                    {!this.state.myStoryEdit && (
+                        <PrintAStory
+                            story={ViewList}
+                            setMyStoryEdit={
+                                this.setMyStoryEdit
+                            }
+                        />
+                    )}
+                    {this.state.myStoryEdit && (
+                        <UpdateFullStory
+                            storyId={this.props.storyId}
+                            setMyStoryEdit={
+                                this.setMyStoryEdit
+                            }
+                        />
+                    )}
                 </>
             );
     }

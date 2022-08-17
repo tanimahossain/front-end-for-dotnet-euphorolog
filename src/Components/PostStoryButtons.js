@@ -3,19 +3,26 @@ import React, { Component } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import '../App.css';
 import '../styles/Story.css';
-import Loading from './Loading.js';
+import AllContext from './AllContext';
+import ErrorAlert from './ErrorAlert';
 export default class PostStoryButtons extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
-        //console.log(props);
         this.state = {
             storyTitle: '',
             storyDescription: '',
             loading: false,
             doRedirect: false,
             error: '',
+            url: '',
         };
     }
+    ResetError = () => {
+        this.setState({
+            error: '',
+        });
+    };
     handleFieldChange = (event) => {
         this.setState({
             [event.target.name]: event.target.value,
@@ -23,6 +30,8 @@ export default class PostStoryButtons extends Component {
     };
     handleUpdateChange = async (event) => {
         event.preventDefault();
+        const { setAlert, setRedirect, LogOut } =
+            this.context;
         const story = {
             storyTitle: this.state.storyTitle,
             storyDescription: this.state.storyDescription,
@@ -35,48 +44,50 @@ export default class PostStoryButtons extends Component {
             },
         };
         const baseUrl = '/api/v1/stories/';
-        //const navigate = useNavigate();
-        axios.defaults.headers = {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Expires: '0',
-        };
         try {
-            this.setState({
-                loading: true,
-            });
+            setAlert('loading', true);
             const response = await axios.post(
                 baseUrl,
                 story,
                 config
             );
             this.setState({
-                doRedirect:
-                    '/stories/' + response.data.storyId,
+                url: '/stories/' + response.data.storyId,
             });
-            console.log(this.state.doRedirect);
+            setRedirect(true);
         } catch (err) {
-            console.log(err.response.data.message);
-            this.setState({
-                error: err.response.data.message,
-            });
+            if (err.response.status === 401) {
+                LogOut();
+            } else if (err.response.status !== 404) {
+                this.setState({
+                    error: err.response.data.message,
+                });
+            }
         }
-        this.setState({ loading: true });
+        setAlert('loading', false);
     };
     render() {
-        const baseUrl = localStorage.getItem('loggedIn')
-            ? '/users/' + localStorage.getItem('userName')
+        const {
+            isLoggedIn,
+            userName,
+            doRedirect,
+            setRedirect,
+        } = this.context;
+        const baseUrl = isLoggedIn
+            ? '/users/' + userName
             : '/homepage';
-        if (this.state.doRedirect) {
-            return <Navigate to={this.state.doRedirect} />;
+        if (doRedirect) {
+            setRedirect(false);
+            return <Navigate to={this.state.url} />;
+        }
+        console.log(isLoggedIn);
+        if (!isLoggedIn) {
+            return <Navigate to="/" />;
         }
         return (
             <div className="container">
                 <div className="storyDetails">
                     <div className="story-info">
-                        <Loading
-                            loading={this.state.loading}
-                        />
                         <form
                             onSubmit={
                                 this.handleUpdateChange
@@ -113,15 +124,10 @@ export default class PostStoryButtons extends Component {
                             <button className="UpdateStorybtn">
                                 Post Story
                             </button>
-                            {this.state.error && (
-                                <div
-                                    name="error box"
-                                    className="errorAlertBox"
-                                    wrap="hard"
-                                >
-                                    {this.state.error}
-                                </div>
-                            )}
+                            <ErrorAlert
+                                error={this.state.error}
+                                ResetError={this.ResetError}
+                            />
                         </form>
                     </div>
                 </div>

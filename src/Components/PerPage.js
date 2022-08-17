@@ -8,13 +8,11 @@ import '../styles/Pagination.css';
 function PerPage(props) {
     const mx = props.mx;
     const currentPage = props.currentPage;
-    const endPage = props.endPage;
     const pageNo = props.pageNo;
-    const startPage = props.startPage;
     const prevPage = currentPage - 1 ? currentPage - 1 : 1;
     const nextPage =
         currentPage + 1 <= mx ? currentPage + 1 : mx;
-    //return <span className="page">{pageNo}</span>;
+
     if (pageNo == currentPage) {
         return (
             <span
@@ -25,22 +23,12 @@ function PerPage(props) {
             </span>
         );
     } else if (pageNo === 'Prev') {
-        if (1 === currentPage) {
-            return (
-                <>
-                    <span className="notPage">
-                        <span className="icon">
-                            <FaChevronLeft />
-                        </span>
-                        {pageNo}
-                    </span>
-                </>
-            );
-        }
+        const styleClassName =
+            currentPage === 1 ? 'notPage' : 'page';
         return (
             <>
                 <span
-                    className="page"
+                    className={styleClassName}
                     onClick={() => props.Paginate(prevPage)}
                 >
                     <span className="icon">

@@ -1,28 +1,14 @@
 import axios from 'axios';
 import React, { Component } from 'react';
 //import { Navigate } from 'react-router-dom';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import '../App.css';
 import UserButtons from '../Components/UserButtons.js';
 import UserFullName from '../Components/UserFullName.js';
 import '../styles/Profile.css';
-import Loading from './Loading';
-const GetButtons = (props) => {
-    const navigate = useNavigate();
-    const loggedIn = localStorage.getItem('loggedIn');
-    if (
-        loggedIn &&
-        localStorage.getItem('userName') ==
-            props.user.userName
-    ) {
-        return <UserButtons navigate={navigate} />;
-    }
-    return;
-};
+import AllContext from './AllContext';
+
 function PrintAUser(props) {
-    if (!props.user.userName) {
-        //return <Navigate to="/" />;
-    }
     return (
         <div className="container bottonBorder">
             <div className="userDetails">
@@ -34,7 +20,7 @@ function PrintAUser(props) {
                             />
                         </div>
                     </div>
-                    {GetButtons(props)}
+                    <UserButtons user={props.user} />
                 </div>
             </div>
         </div>
@@ -42,9 +28,9 @@ function PrintAUser(props) {
 }
 
 class Profile extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
-        //console.log(props);
         this.state = {
             ViewList: {},
             userId: props.userId,
@@ -54,34 +40,38 @@ class Profile extends Component {
         };
     }
     async componentDidMount() {
+        const { setAlert, LogOut } = this.context;
         const baseUrl =
             '/api/v1/users/' + this.state.userId;
-        axios.defaults.headers = {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Expires: '0',
-        };
+        setAlert('loading', true);
         try {
-            this.setState({ loading: true });
             const response = await axios.get(baseUrl);
             this.setState({
                 ViewList: response.data.userData,
             });
         } catch (err) {
+            if (err.response.status === 401) {
+                LogOut();
+            }
+            if (err.response.status !== 404) {
+                alert(err);
+            }
             this.setState({
                 doRedirect: true,
             });
         }
-        this.setState({ loading: false });
+        setAlert('loading', false);
     }
     render() {
         const { ViewList } = this.state;
         if (this.state.doRedirect) {
+            this.setState({
+                doRedirect: false,
+            });
             return <Navigate to="/" />;
         }
         return (
             <>
-                <Loading loading={this.state.loading} />
                 <PrintAUser user={ViewList} />
             </>
         );

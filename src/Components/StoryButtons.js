@@ -1,18 +1,15 @@
 import axios from 'axios';
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
 import '../App.css';
 import '../styles/Story.css';
-import LogOut from '../utils/LogOut.js';
-import Loading from './Loading.js';
+import AllContext from './AllContext';
 export default class StoryButtons extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
-        //console.log(props);
         this.state = {
             ViewList: {},
-            storyId: props.story.storyId,
-            loading: false,
+            storyId: this.props.storyId,
         };
     }
     handleDeleteChange = async () => {
@@ -25,48 +22,54 @@ export default class StoryButtons extends Component {
                 )}`,
             },
         };
+        const { LogOut, setRedirect, setAlert } =
+            this.context;
         const baseUrl =
-            '/api/v1/stories/' + this.state.storyId;
-        axios.defaults.headers = {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Expires: '0',
-        };
+            '/api/v1/stories/' + this.props.storyId;
+        setAlert('loading', true);
         try {
-            this.setState({
-                loading: true,
-            });
             await axios.delete(baseUrl, config, story);
             alert('story deleted!');
-            window.open('/', '_self');
+            setRedirect(true);
         } catch (err) {
             if (err.response.status === 401) {
                 LogOut();
             }
-            console.log(err);
-            console.log(err.response.status);
+            if (err.response.status !== 404) {
+                alert(err);
+            }
         }
-        this.setState({
-            loading: false,
-        });
+        setAlert('loading', false);
     };
     render() {
-        const baseUrl =
-            '/stories/' + this.state.storyId + '/edit';
+        const {
+            isLoggedIn,
+            userName,
+            doRedirect,
+            setRedirect,
+        } = this.context;
+        if (!isLoggedIn || userName !== this.props.userName)
+            return;
+        if (doRedirect) {
+            setRedirect(false);
+            return <Navigate to="/" />;
+        }
+        console.log(this.props.setMyStoryEdit.toString());
+        const { setMyStoryEdit } = this.props;
         return (
             <>
-                <Loading loading={this.state.loading} />
                 <button
                     className="DeleteStorybtn"
                     onClick={this.handleDeleteChange}
                 >
                     Delete Story
                 </button>
-                <Link to={baseUrl}>
-                    <button className="UpdateStorybtn">
-                        Update Story
-                    </button>
-                </Link>
+                <button
+                    className="UpdateStorybtn"
+                    onClick={() => setMyStoryEdit(true)}
+                >
+                    Update Story
+                </button>
             </>
         );
     }

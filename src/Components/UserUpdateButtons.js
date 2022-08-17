@@ -3,43 +3,52 @@ import React, { Component } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import '../App.css';
 import '../styles/Profile.css';
+import AllContext from './AllContext';
 import ErrorAlert from './ErrorAlert.js';
-import Loading from './Loading';
 export default class PostStoryButtons extends Component {
+    static contextType = AllContext;
     constructor(props) {
         super(props);
-        //console.log(props);
         this.state = {
             fullName: '',
             password: '',
             confirm: '',
-            loading: false,
-            doRedirect: false,
             error: '',
         };
     }
+    ResetError = () => {
+        this.setState({
+            error: '',
+        });
+    };
     handleFieldChange = (event) => {
         this.setState({
             [event.target.name]: event.target.value,
         });
     };
     handleUpdateChange = async (event) => {
+        const { password, confirmPassword } = this.state;
+        const {
+            setAlert,
+            setAuth,
+            token,
+            userName,
+            setRedirect,
+            LogOut,
+        } = this.context;
         event.preventDefault();
-        if (
-            this.state.password &&
-            this.state.password !==
-                this.state.confirmPassword
-        ) {
+        this.setState({
+            error: '',
+        });
+        if (password && password !== confirmPassword) {
             this.setState({
                 error: "Passwords doesn't match each other",
             });
             return;
         }
         if (
-            (this.state.password &&
-                !this.state.confirmPassword) ||
-            (!this.state.password &&
-                this.state.confirmPassword)
+            (password && !confirmPassword) ||
+            (!password && confirmPassword)
         ) {
             this.setState({
                 error: "Passwords doesn't match each other",
@@ -52,74 +61,78 @@ export default class PostStoryButtons extends Component {
                 fullName: this.state.fullName,
             };
         }
-        if (this.state.password) {
-            story.password = this.state.password;
-        }
+        if (password) story.password = password;
         const config = {
             headers: {
-                Authorization: `Bearer ${localStorage.getItem(
-                    'token'
-                )}`,
+                Authorization: `Bearer ${token}`,
             },
         };
         const baseUrl = '/api/v1/users/';
-        //const navigate = useNavigate();
-        axios.defaults.headers = {
-            'Cache-Control': 'no-cache',
-            Pragma: 'no-cache',
-            Expires: '0',
-        };
         try {
-            this.setState({
-                loading: true,
-            });
-            console.log('update call');
+            setAlert('loading', true);
             const response = await axios.put(
                 baseUrl,
                 story,
                 config
             );
-            console.log(response);
             if (response.data.token) {
-                localStorage.setItem(
-                    'token',
+                setAuth(
+                    true,
+                    userName,
                     response.data.token
                 );
             }
-            this.setState({
-                doRedirect: true,
-                error: '',
-            });
+            setRedirect(true);
         } catch (err) {
-            console.log(err.response.data.message);
-            this.setState({
-                error: err.response.data.message,
-            });
+            if (err.response.status === 401) {
+                LogOut();
+            }
+            if (err.response.status !== 404) {
+                this.setState({
+                    error: err.response.data.message,
+                });
+            }
         }
-        this.setState({
-            loading: false,
-        });
+        setAlert('loading', false);
+    };
+    navigate = () => {
+        const {
+            doRedirect,
+            isLoggedIn,
+            userName,
+            setRedirect,
+        } = this.context;
+        const baseUrl = isLoggedIn
+            ? '/users/' + userName
+            : '/homepage';
+        if (doRedirect) {
+            setRedirect(false);
+            return <Navigate to={baseUrl} />;
+        }
+        if (!isLoggedIn) {
+            return <Navigate to="/" />;
+        }
     };
     render() {
-        const baseUrl = localStorage.getItem('loggedIn')
-            ? '/users/' + localStorage.getItem('userName')
+        const {
+            doRedirect,
+            isLoggedIn,
+            userName,
+            setRedirect,
+        } = this.context;
+        const baseUrl = isLoggedIn
+            ? '/users/' + userName
             : '/homepage';
-        //const baseUrl = '/homepage';
-        console.log(
-            baseUrl,
-            this.state.doRedirect,
-            this.state.loading,
-            localStorage.getItem('userName')
-        );
-        if (this.state.doRedirect) {
-            this.setState({
-                doRedirect: false,
-            });
+        () => this.navigate();
+        if (doRedirect) {
+            setRedirect(false);
             return <Navigate to={baseUrl} />;
+        }
+        if (!isLoggedIn) {
+            return <Navigate to="/" />;
         }
         return (
             <>
-                {this.state.loading && <Loading />}
                 <div className="container">
                     <div className="storyDetails">
                         <div className="story-info">
@@ -177,6 +190,9 @@ export default class PostStoryButtons extends Component {
                                 </button>
                                 <ErrorAlert
                                     error={this.state.error}
+                                    ResetError={
+                                        this.ResetError
+                                    }
                                 />
                             </form>
                         </div>

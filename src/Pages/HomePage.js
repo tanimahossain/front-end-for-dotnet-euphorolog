@@ -1,11 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import '../App.css';
-//import Navbar from '../Components/Navbar.js';
 import Stories from '../Components/StoryList.js';
 function HomePage() {
     return (
-        <div>
-            <Stories />
-        </div>
+        <>
+            <Stories navigate={useNavigate()} />
+        </>
     );
 }
 export default HomePage;

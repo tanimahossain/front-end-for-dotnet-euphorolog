@@ -1,19 +1,19 @@
 import Modal from 'react-modal';
 import HashLoader from 'react-spinners/HashLoader';
 import '../App.css';
-Modal.setAppElement('#root');
 function Loading({ loading }) {
+    console.log('askdh');
     return (
         <Modal
             isOpen={loading}
             style={{
                 overlay: {
                     position: 'absolute',
-                    top: 60,
+                    top: 40,
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    height: '1000px',
+                    height: '1800px',
                     alignItems: 'center',
                     alignContent: 'center',
                     marginLeft: 'auto',
@@ -27,7 +27,7 @@ function Loading({ loading }) {
                     left: '40px',
                     right: '40px',
                     bottom: '40px',
-                    height: '500px',
+                    height: '600px',
                     alignItems: 'center',
                     alignContent: 'center',
                     border: '1px solid #ccc',
@@ -37,14 +37,14 @@ function Loading({ loading }) {
                     borderRadius: '4px',
                     outline: 'none',
                     padding: '20px',
+                    justifyContent: 'center',
                 },
             }}
         >
             <div className="Loading">
-                <h1 className="Loading"> Loading... </h1>
                 <HashLoader
-                    size={150}
-                    color={'#123abc'}
+                    size={80}
+                    color={'#14365d'}
                     loading={true}
                 />
             </div>

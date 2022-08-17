@@ -4,6 +4,7 @@ import '../App.css';
 import UpdateFullStory from '../Components/UpdateFullStory.js';
 function StoryDetails() {
     const storyIdParams = useParams();
+    console.log('(start)');
     return (
         <>
             <UpdateFullStory storyId={storyIdParams.id} />

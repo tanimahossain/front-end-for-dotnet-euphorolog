@@ -5,7 +5,7 @@ function StoryInfo(props) {
     return (
         <div className="story-info">
             <StoryTitle story={props.story} />
-            <div className="storyBody">
+            <div className="storyOpeningLines">
                 {props.story.openingLines}
             </div>
         </div>
